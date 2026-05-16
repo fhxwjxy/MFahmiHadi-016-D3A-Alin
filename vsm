@@ -1,0 +1,274 @@
+import sys
+import os
+import math
+import subprocess
+
+def install_nltk():
+    """mengecek dan menginstall NLTK jika belum ada."""
+    try:
+        import nltk
+        print("NTLK sudah terinstall.")
+    except ImportError:
+        print("NLTK belom terinstall. menginstall sekrang..")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "nltk"])
+        print("NLTK berhasil diinstall")
+
+def download_nltk_data():
+    import nltk
+
+    try:
+        nltk.data.find("tokenizers/punkt_tab")
+    except LookupError:
+        print("mengunduh data punkt")
+        nltk.download("punkt_tab",quiet=True)
+
+    try:
+        nltk.data.find("corpora/stopwords")
+    except LookupError:
+        print("mendownload data stopwords")
+        nltk.download("stopwords", quiet=True)
+
+    print("data nltk siap  digunakan")
+
+
+def preprocess(text):
+    try:
+        import nltk
+        from nltk.tokenize import word_tokenize
+        from nltk.corpus import stopwords
+        from nltk.stem import PorterStemmer
+ 
+        stemmer    = PorterStemmer()
+        stop_words = set(stopwords.words("english"))
+        text       = text.lower()
+        tokens     = word_tokenize(text)
+ 
+        clean_tokens = []
+        for kata in tokens:
+            if kata.isalpha() and kata not in stop_words:
+                clean_tokens.append(kata)
+
+        stemmed_tokens = []
+        for kata in clean_tokens:
+            stemmed_tokens.append(stemmer.stem(kata))
+ 
+        return stemmed_tokens
+ 
+    except Exception:
+        STOPWORDS = {
+            "a", "an", "the", "is", "it", "in", "on", "at", "to", "for", "of", "and", "or", "but", "not", "with", "as", "by", "from",
+            "that", "this", "are", "was", "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "will", "would",
+            "could", "should", "may", "might", "its", "their", "they", "them", "we", "our", "you", "your", "he", "she", "his", "her",
+            "which", "who", "what", "how", "when", "where", "each", "all", "both", "such", "into", "through", "during", "also", "than",
+            "more", "most", "can", "use", "used", "using", "allows"
+        }
+         
+        text = text.lower()
+
+        raw_tokens = text.split()
+        clean_tokens = []
+        for kata in raw_tokens:
+            kata = kata.strip(".,!?;:\"'()-[]{}/*")
+            if kata.isalpha() and kata not in STOPWORDS:
+                clean_tokens.append(kata)
+
+        def simple_stem(word):
+            suffixes = ["tion", "ness", "ment", "able", "ible",
+                        "ing", "ful", "ers", "ly", "al", "er", "ed", "es", "s"]
+            for suffix in suffixes:
+                if word.endswith(suffix) and len(word) - len(suffix) >= 3:
+                    return word[:-len(suffix)]
+            return word
+
+        return [simple_stem(kata) for kata in clean_tokens]
+    
+def hitung_tf(frekuensi):
+    if frekuensi > 0:
+        return 1 + math.log10(frekuensi)
+    return 0
+    
+def hitung_idf(total_dokumen, jumlah_dokumen_mengandung_term):
+    return math.log10(total_dokumen / jumlah_dokumen_mengandung_term)
+
+def bangun_inverted_index(nama_dokumen_list, isi_dokumen_list):
+    total_dokumen = len(nama_dokumen_list)
+    frekuensi = []
+    for tokens in isi_dokumen_list:
+        freq_dict = {}
+        for kata in tokens:
+            freq_dict[kata] = freq_dict.get(kata, 0) + 1
+        frekuensi.append(freq_dict)
+    semua_term = set()
+    for freq_dict in frekuensi:
+        semua_term.update(freq_dict.keys())
+    idf = {}
+    for term in semua_term:
+        n = sum(1 for fd in frekuensi if term in fd)
+        idf[term] = hitung_idf(total_dokumen, n)
+
+    inverted_index = {}
+    bobot_dokumen  = {}
+    for i, freq_dict in enumerate(frekuensi):
+        nama_dok = nama_dokumen_list[i]
+        bobot_dokumen[nama_dok] = {}
+        for term, freq in freq_dict.items():
+            tfidf = hitung_tf(freq) * idf[term]
+            bobot_dokumen[nama_dok][term] = tfidf
+            nomor_dok = i + 1
+            if term not in inverted_index:
+                inverted_index[term] = []
+            inverted_index[term].append((nomor_dok, tfidf))
+
+    return inverted_index, bobot_dokumen
+
+def hitung_cosine_similarity(vektor_a, vektor_b):
+    dot_product = sum(vektor_a[t] * vektor_b[t] for t in vektor_a if t in vektor_b)
+
+    magnitude_a = math.sqrt(sum(v ** 2 for v in vektor_a.values()))
+    magnitude_b = math.sqrt(sum(v ** 2 for v in vektor_b.values()))
+
+    if magnitude_a == 0 or magnitude_b == 0:
+        return 0.0
+
+    return dot_product / (magnitude_a * magnitude_b)
+
+
+def proses_query(teks_query, bobot_dokumen, nama_dokumen_list):
+    operator_logika = {"and", "or", "not"}
+    tokens_query = [t for t in preprocess(teks_query) if t not in operator_logika]
+    vektor_query = {}
+    for term in tokens_query:
+        vektor_query[term] = vektor_query.get(term, 0) + 1
+    hasil = []
+    for nama_dok in nama_dokumen_list:
+        sim = hitung_cosine_similarity(bobot_dokumen[nama_dok], vektor_query)
+        hasil.append((nama_dok, sim))
+    for i in range(len(hasil)):
+        for j in range(i + 1, len(hasil)):
+            if hasil[j][1] > hasil[i][1]:
+                hasil[i], hasil[j] = hasil[j], hasil[i]
+
+    return hasil
+
+
+
+def baca_file(nama_file):
+    with open(nama_file, "r", encoding="utf-8") as f:
+        return f.read()
+
+
+
+def baca_daftar_dokumen(base_file):
+    with open(base_file, "r", encoding="utf-8") as f:
+        baris = f.read().strip().splitlines()
+    return [b.strip().lstrip('\ufeff') for b in baris if b.strip()]
+
+
+def simpan_index(inverted_index, nama_file="index.txt"):
+    with open(nama_file, "w", encoding="utf-8") as f:
+        for term in sorted(inverted_index.keys()):
+            posting_str = "  ".join(f"{dok},{round(bobot)}" for dok, bobot in inverted_index[term])
+            f.write(f"{term}: {posting_str}\n")
+    print(f"[OK] Inverted index disimpan ke '{nama_file}'")
+
+def simpan_weights(bobot_dokumen, nama_file="weights.txt"):
+    with open(nama_file, "w", encoding="utf-8") as f:
+        for nama_dok, bobot_dict in bobot_dokumen.items():
+            term_str = "  ".join(f"{t}, {b:.4f}" for t, b in sorted(bobot_dict.items()))
+            f.write(f"{nama_dok}: {term_str}\n")
+    print(f"[OK] Bobot TF-IDF disimpan ke '{nama_file}'")
+
+
+def simpan_response(hasil_ranking, nama_file="response.txt"):
+    THRESHOLD = 0.001
+    relevan = [(n, s) for n, s in hasil_ranking if s > THRESHOLD]
+    with open(nama_file, "w", encoding="utf-8") as f:
+        f.write(f"{len(relevan)}\n")
+        for nama_dok, sim in relevan:
+            f.write(f"{nama_dok} {sim:.4f}\n")
+    print(f"Hasil ranking disimpan ke '{nama_file}'")
+
+
+def tampilkan_hasil(hasil_ranking, teks_query):
+    THRESHOLD = 0.001
+    relevan = [(n, s) for n, s in hasil_ranking if s > THRESHOLD]
+
+    print("\n" + "=" * 55)
+    print("  HASIL PENCARIAN")
+    print("=" * 55)
+    print(f"  Query : {teks_query.strip()}")
+    print(f"  Dokumen relevan (similarity > 0.001): {len(relevan)}")
+    print("-" * 55)
+
+    if not relevan:
+        print("  Tidak ada dokumen yang relevan dengan query ini.")
+    else:
+        print(f"  {'Rank':<6} {'Dokumen':<20} {'Similarity'}")
+        print(f"  {'-'*4:<6} {'-'*18:<20} {'-'*10}")
+        for rank, (nama_dok, sim) in enumerate(relevan, start=1):
+            print(f"  {rank:<6} {nama_dok:<20} {sim:.4f}")
+
+    print("=" * 55)
+
+
+def main():
+    if len(sys.argv) != 3:
+        print("Cara penggunaan: python vsm base.txt query.txt")
+        sys.exit(1)
+
+    base_file  = sys.argv[1]
+    query_file = sys.argv[2]
+
+    for f in [base_file, query_file]:
+        if not os.path.exists(f):
+            print(f"[ERROR] File '{f}' tidak ditemukan.")
+            sys.exit(1)
+
+    print("=" * 55)
+    print("  VECTOR SPACE MODEL - Information Retrieval")
+    print("  Aljabar Linear | JTK POLBAN")
+    print("=" * 55)
+
+    # Tahap 1: Inisialisasi
+    print("\n[TAHAP 1] Inisialisasi...")
+    install_nltk()
+    download_nltk_data()
+
+    # Tahap 2: Baca & preprocess dokumen
+    print("\n[TAHAP 2] Membaca dokumen...")
+    nama_dokumen_list = baca_daftar_dokumen(base_file)
+    print(f"  Ditemukan {len(nama_dokumen_list)} dokumen: {nama_dokumen_list}")
+
+    isi_dokumen_list = []
+    for nama_dok in nama_dokumen_list:
+        if not os.path.exists(nama_dok):
+            print(f"[ERROR] Dokumen '{nama_dok}' tidak ditemukan!")
+            sys.exit(1)
+        tokens = preprocess(baca_file(nama_dok))
+        isi_dokumen_list.append(tokens)
+        print(f"  - {nama_dok}: {len(tokens)} term setelah preprocessing")
+
+    # Tahap 3: Bangun inverted index
+    print("\n[TAHAP 3] Membangun inverted index & menghitung TF-IDF...")
+    inverted_index, bobot_dokumen = bangun_inverted_index(nama_dokumen_list, isi_dokumen_list)
+    print(f"  Total term unik: {len(inverted_index)}")
+    simpan_index(inverted_index)
+    simpan_weights(bobot_dokumen)
+
+    # Tahap 4: Proses query
+    print("\n[TAHAP 4] Memproses query...")
+    teks_query = baca_file(query_file)
+    print(f"  Query: {teks_query.strip()}")
+
+    hasil_ranking = proses_query(teks_query, bobot_dokumen, nama_dokumen_list)
+    simpan_response(hasil_ranking)
+    tampilkan_hasil(hasil_ranking, teks_query)
+
+    print("\n[SELESAI] Semua file output berhasil dibuat!")
+    print("  - index.txt    : Inverted index")
+    print("  - weights.txt  : Bobot TF-IDF per dokumen")
+    print("  - response.txt : Hasil ranking dokumen")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,1 @@
+Computer networks allow devices to communicate by sending data packets over cables or wireless signals. The TCP and IP protocols manage how data is transmitted across the internet. Network security uses firewalls and encryption to protect data from unauthorized access.

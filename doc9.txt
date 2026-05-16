@@ -1,0 +1,1 @@
+Linear algebra studies vectors, matrices, and systems of linear equations. Matrix multiplication and eigenvalue decomposition are fundamental operations used in engineering and data science. Vector spaces provide a mathematical framework for understanding transformations and dimensions.

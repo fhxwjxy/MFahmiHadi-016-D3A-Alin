@@ -1,0 +1,1 @@
+A database management system organizes data into structured tables and uses SQL for querying. Indexing techniques speed up data access in large databases. Relational databases ensure data integrity through primary keys and foreign key constraints between tables.

@@ -1,0 +1,1 @@
+Operating systems manage hardware resources and provide services for running application programs. Process scheduling, memory management, and file systems are core components of an operating system. Popular operating systems include Linux, Windows, and macOS, each with different architecture and design goals.

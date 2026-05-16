@@ -1,0 +1,1 @@
+In document searching systems, information retrieval is used to find data that matches user needs. Queries usually consist of several important keywords representing the required information. The vector space model utilizes tf-idf calculations so documents containing the most relevant words receive higher similarity scores than other documents.

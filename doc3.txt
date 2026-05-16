@@ -1,0 +1,1 @@
+The development of information retrieval has grown rapidly because of the increasing amount of digital data available on the internet. The vector space model is one of the most popular methods because it can represent documents as numerical vectors. Using this method, the system can determine relationships between queries and documents based on word weights.

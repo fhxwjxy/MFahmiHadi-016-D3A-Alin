@@ -1,0 +1,1 @@
+Modern search engines use information retrieval concepts to improve search result quality. One of the most frequently used methods is the vector space model. Documents and queries are transformed into vector form so similarity calculations can be performed using cosine similarity in a more accurate and structured manner.

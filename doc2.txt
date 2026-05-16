@@ -1,0 +1,1 @@
+An information retrieval system works by performing indexing on text documents. After indexing is completed, the user query is compared with all documents using the vector space model. Cosine similarity values are used to determine the most relevant documents. This approach is commonly applied in digital libraries and academic search engines.

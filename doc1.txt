@@ -1,0 +1,1 @@
+Information retrieval is a technique used to search relevant information from a collection of documents. This system is widely implemented in modern search engines. The vector space model helps calculate similarity between a query and documents using vector representation. Searching becomes more efficient when users enter specific keywords into the system.
