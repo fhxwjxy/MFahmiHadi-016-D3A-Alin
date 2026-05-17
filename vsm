@@ -4,10 +4,9 @@ import math
 import subprocess
 
 def install_nltk():
-    """mengecek dan menginstall NLTK jika belum ada."""
     try:
         import nltk
-        print("NTLK sudah terinstall.")
+        print("NTLK sudah terinstall")
     except ImportError:
         print("NLTK belom terinstall. menginstall sekrang..")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "nltk"])
@@ -169,7 +168,7 @@ def simpan_index(inverted_index, nama_file="index.txt"):
         for term in sorted(inverted_index.keys()):
             posting_str = "  ".join(f"{dok},{round(bobot)}" for dok, bobot in inverted_index[term])
             f.write(f"{term}: {posting_str}\n")
-    print(f"[OK] Inverted index disimpan ke '{nama_file}'")
+    print(f"Inverted index disimpan ke '{nama_file}'")
 
 def simpan_weights(bobot_dokumen, nama_file="weights.txt"):
     with open(nama_file, "w", encoding="utf-8") as f:
@@ -201,7 +200,7 @@ def tampilkan_hasil(hasil_ranking, teks_query):
     print("-" * 55)
 
     if not relevan:
-        print("  Tidak ada dokumen yang relevan dengan query ini.")
+        print("  Tidak ada dokumen yang relevan dengan query ini")
     else:
         print(f"  {'Rank':<6} {'Dokumen':<20} {'Similarity'}")
         print(f"  {'-'*4:<6} {'-'*18:<20} {'-'*10}")
@@ -225,17 +224,16 @@ def main():
             sys.exit(1)
 
     print("=" * 55)
-    print("  VECTOR SPACE MODEL - Information Retrieval")
-    print("  Aljabar Linear | JTK POLBAN")
+    print(" Information Retrieval")
     print("=" * 55)
 
     # Tahap 1: Inisialisasi
-    print("\n[TAHAP 1] Inisialisasi...")
+    print("\n1. Inisialisasi")
     install_nltk()
     download_nltk_data()
 
     # Tahap 2: Baca & preprocess dokumen
-    print("\n[TAHAP 2] Membaca dokumen...")
+    print("\n2. Membaca dokumen")
     nama_dokumen_list = baca_daftar_dokumen(base_file)
     print(f"  Ditemukan {len(nama_dokumen_list)} dokumen: {nama_dokumen_list}")
 
@@ -249,14 +247,14 @@ def main():
         print(f"  - {nama_dok}: {len(tokens)} term setelah preprocessing")
 
     # Tahap 3: Bangun inverted index
-    print("\n[TAHAP 3] Membangun inverted index & menghitung TF-IDF...")
+    print("\n3. Membangun inverted index & menghitung TF-IDF")
     inverted_index, bobot_dokumen = bangun_inverted_index(nama_dokumen_list, isi_dokumen_list)
     print(f"  Total term unik: {len(inverted_index)}")
     simpan_index(inverted_index)
     simpan_weights(bobot_dokumen)
 
     # Tahap 4: Proses query
-    print("\n[TAHAP 4] Memproses query...")
+    print("\n4. Memproses query")
     teks_query = baca_file(query_file)
     print(f"  Query: {teks_query.strip()}")
 
@@ -264,7 +262,7 @@ def main():
     simpan_response(hasil_ranking)
     tampilkan_hasil(hasil_ranking, teks_query)
 
-    print("\n[SELESAI] Semua file output berhasil dibuat!")
+    print("\nSemua file output berhasil dibuat")
     print("  - index.txt    : Inverted index")
     print("  - weights.txt  : Bobot TF-IDF per dokumen")
     print("  - response.txt : Hasil ranking dokumen")
